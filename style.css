@@ -201,6 +201,36 @@
             cursor: pointer;
         }
 
+        .visualization-mode-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .visualization-mode-control label {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .visualization-mode-control select {
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .visualization-mode-control select:hover {
+            background: #fff;
+            color: #000;
+        }
+
         .particle-controls {
             display: flex;
             gap: 15px;
