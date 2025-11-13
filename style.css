@@ -1,0 +1,266 @@
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #000;
+        }
+
+        a{
+            color: #fff;
+            text-decoration: none;
+            /* border: 1px solid white; */
+            padding: 6px;
+        }
+
+        a:hover{
+            text-decoration: underline;
+        }
+
+        .controls-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #000;
+            border-top: 3px solid #fff;
+            padding: 15px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .playlist-select {
+            width: 100%;
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            cursor: pointer;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        .playlist-select:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .playlist-select option {
+            background: #000;
+            color: #fff;
+            padding: 5px;
+        }
+
+        .now-playing {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 2px solid #fff;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .now-playing .title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .now-playing .artist {
+            opacity: 0.8;
+            font-size: 11px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: none;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #fff;
+            color: #000;
+        }
+
+        button:active:not(:disabled) {
+            transform: translate(1px, 1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #666;
+        }
+
+        .color-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .preset-btn {
+            padding: 5px 10px;
+            font-size: 10px;
+        }
+
+        .color-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-inputs label {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .color-inputs input[type="color"] {
+            width: 40px;
+            height: 30px;
+            border: 2px solid #fff;
+            cursor: pointer;
+            background: #000;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .volume-control label {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .volume-control input[type="range"] {
+            flex: 1;
+            height: 5px;
+            background: #000;
+            border: 1px solid #fff;
+            outline: none;
+        }
+
+        .volume-control input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .volume-control input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .particle-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .particle-count-control,
+        .particle-shape-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .particle-count-control label,
+        .particle-shape-control label {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .particle-count-control input[type="range"] {
+            width: 100px;
+            height: 5px;
+            background: #000;
+            border: 1px solid #fff;
+            outline: none;
+        }
+
+        .particle-count-control input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .particle-count-control input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .particle-shape-control select {
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .particle-shape-control select:hover {
+            background: #fff;
+            color: #000;
+        }
