@@ -44,6 +44,13 @@
         let particles = [];
         let particleShape = 'paw';
 
+        // Visualization mode
+        let visualizationMode = 'classic';
+
+        // Waterfall visualization data
+        let waterfallHistory = [];
+        const WATERFALL_ROWS = 100;
+
         // DOM elements
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -59,6 +66,9 @@
         const particleCountSlider = document.getElementById('particleCountSlider');
         const particleCountValue = document.getElementById('particleCountValue');
         const particleShapeSelect = document.getElementById('particleShape');
+        const visualizationModeSelect = document.getElementById('visualizationMode');
+        const controlsPanel = document.getElementById('controlsPanel');
+        const collapseBtn = document.getElementById('collapseBtn');
 
         // Initialize canvas
         function resizeCanvas() {
@@ -588,17 +598,40 @@
             // Clear canvas
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             // Draw particles in background (with lower opacity to keep them behind)
-            ctx.save();
-            ctx.globalAlpha = 0.4; // Reduce particle opacity so they stay in background
-            updateParticles();
-            ctx.restore();
+            // Skip particles for waterfall mode for better performance
+            if (visualizationMode !== 'waterfall') {
+                ctx.save();
+                ctx.globalAlpha = 0.4; // Reduce particle opacity so they stay in background
+                updateParticles();
+                ctx.restore();
+            }
 
-            // Calculate dimensions
-            const barWidth = canvas.width / NUM_BARS;
-            const centerY = window.innerWidth <= 768 ? canvas.height * 0.25 : canvas.height / 2;
+            // Process frequency data (common for all modes)
+            const processedData = processFrequencyData();
 
+            // Render based on visualization mode
+            switch (visualizationMode) {
+                case 'classic':
+                    drawClassicWave(processedData);
+                    break;
+                case 'frequency-bands':
+                    drawFrequencyBands(processedData);
+                    break;
+                case 'radial':
+                    drawRadialVisualizer(processedData);
+                    break;
+                case 'waterfall':
+                    drawWaterfall(processedData);
+                    break;
+                default:
+                    drawClassicWave(processedData);
+            }
+        }
+
+        // Process frequency data with enhanced dynamics (shared by all modes)
+        function processFrequencyData() {
             // Find current min/max for dynamic range normalization
             let currentMin = 255;
             let currentMax = 0;
@@ -606,12 +639,12 @@
                 if (dataArray[i] < currentMin) currentMin = dataArray[i];
                 if (dataArray[i] > currentMax) currentMax = dataArray[i];
             }
-            
+
             // Update dynamic range (smooth tracking)
             minValue = minValue * 0.95 + currentMin * 0.05;
             maxValue = maxValue * 0.95 + currentMax * 0.05;
             dynamicRange = Math.max(1, maxValue - minValue);
-            
+
             // Process frequency data with enhanced dynamics
             const processedData = new Array(NUM_BARS);
             for (let i = 0; i < NUM_BARS; i++) {
@@ -620,28 +653,36 @@
                 const dataIndex = Math.floor(logIndex);
                 const nextIndex = Math.min(dataIndex + 1, bufferLength - 1);
                 const t = logIndex - dataIndex;
-                
+
                 // Interpolate between adjacent frequency bins
                 let value = dataArray[dataIndex] * (1 - t) + dataArray[nextIndex] * t;
-                
+
                 // Dynamic range normalization - stretch the range for more movement
                 value = ((value - minValue) / dynamicRange) * 255;
                 value = Math.max(0, Math.min(255, value));
-                
+
                 // Enhanced sensitivity - amplify differences
                 const sensitivity = 2.5; // Boost sensitivity for compressed audio
                 value = Math.pow(value / 255, 1 / sensitivity) * 255;
-                
-                // Reduced smoothing for more responsiveness (70% previous, 30% new)
-                const smoothed = previousData[i] * 0.30 + value * 0.30;
+
+                // Reduced smoothing for more responsiveness
+                const smoothed = previousData[i] * 0.30 + value * 0.70;
                 previousData[i] = smoothed;
-                
+
                 // Additional contrast boost
                 const contrast = 1.8;
                 const enhanced = Math.pow(smoothed / 255, 1 / contrast) * 255;
-                
+
                 processedData[i] = enhanced;
             }
+
+            return processedData;
+        }
+
+        // Classic Wave Visualization (original lava lamp style)
+        function drawClassicWave(processedData) {
+            const barWidth = canvas.width / NUM_BARS;
+            const centerY = window.innerWidth <= 768 ? canvas.height * 0.25 : canvas.height / 2;
 
             // Draw smooth flowing curves using bezier paths
             const points = [];
@@ -649,18 +690,18 @@
                 const x = i * barWidth + barWidth / 2;
                 const value = processedData[i];
                 const normalizedValue = value / 255;
-                
+
                 // Enhanced dynamic scaling - make it more responsive
-                const dynamicScale = 0.7; // Increased from 0.7 for more movement
-                
-                // Smooth wave motion (reduced to let audio drive more)
+                const dynamicScale = 0.7;
+
+                // Smooth wave motion
                 const wave = Math.sin(timeOffset * 0.5 + i * 0.05) * 0.1;
                 const flow = Math.cos(timeOffset * 0.3 + i * 0.08) * 0.05;
-                
-                // Exponential scaling for better visual response to compressed audio
+
+                // Exponential scaling for better visual response
                 const exponentialValue = Math.pow(normalizedValue, 0.7);
                 const barHeight = (exponentialValue * dynamicScale + wave + flow) * centerY * 0.50;
-                
+
                 points.push({
                     x: x,
                     topY: centerY - barHeight,
@@ -671,7 +712,7 @@
 
             // Draw top flowing curve
             drawSmoothCurve(points, 'top', centerY, true);
-            
+
             // Draw bottom flowing curve
             drawSmoothCurve(points, 'bottom', centerY, false);
         }
@@ -750,6 +791,247 @@
             ctx.shadowColor = barColor;
             ctx.stroke();
             ctx.shadowBlur = 0;
+        }
+
+        // Multi-Layer Frequency Bands Visualization
+        function drawFrequencyBands(processedData) {
+            const barWidth = canvas.width / NUM_BARS;
+            const bandHeight = canvas.height / 3;
+
+            // Split into three frequency bands
+            const bassEnd = Math.floor(NUM_BARS * 0.2);
+            const midEnd = Math.floor(NUM_BARS * 0.6);
+
+            // Draw Bass Layer (bottom third - low frequencies)
+            ctx.save();
+            drawBand(processedData, 0, bassEnd, canvas.height - bandHeight, bandHeight, '#ff0066', 1.5);
+            ctx.restore();
+
+            // Draw Mid Layer (middle third - mid frequencies)
+            ctx.save();
+            drawBand(processedData, bassEnd, midEnd, bandHeight, bandHeight, barColor, 1.0);
+            ctx.restore();
+
+            // Draw Treble Layer (top third - high frequencies)
+            ctx.save();
+            drawBand(processedData, midEnd, NUM_BARS, 0, bandHeight, '#00ffff', 0.7);
+            ctx.restore();
+        }
+
+        function drawBand(processedData, startIdx, endIdx, yPos, height, color, amplification) {
+            const bandSize = endIdx - startIdx;
+            const barWidth = canvas.width / bandSize;
+            const centerY = yPos + height / 2;
+
+            const points = [];
+            for (let i = startIdx; i < endIdx; i++) {
+                const x = (i - startIdx) * barWidth + barWidth / 2;
+                const value = processedData[i];
+                const normalizedValue = value / 255;
+
+                // Increased amplitude for more dynamic display
+                const barHeight = Math.pow(normalizedValue, 0.6) * height * 0.85 * amplification;
+
+                points.push({
+                    x: x,
+                    topY: centerY - barHeight,
+                    bottomY: centerY + barHeight,
+                    value: normalizedValue
+                });
+            }
+
+            // Create gradient for this band
+            const baseColor = hexToRgb(color);
+            const gradient = ctx.createLinearGradient(0, yPos, 0, yPos + height);
+
+            // Draw as smooth curve
+            if (points.length < 2) return;
+
+            ctx.beginPath();
+            const firstPoint = points[0];
+            ctx.moveTo(0, firstPoint.topY);
+
+            // Top curve
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const cpx = (p1.x + p2.x) / 2;
+                const cpy = (p1.topY + p2.topY) / 2;
+                ctx.quadraticCurveTo(p1.x, p1.topY, cpx, cpy);
+            }
+
+            const lastPoint = points[points.length - 1];
+            ctx.lineTo(lastPoint.x, lastPoint.topY);
+            ctx.lineTo(canvas.width, centerY);
+
+            // Bottom curve
+            ctx.lineTo(lastPoint.x, lastPoint.bottomY);
+            for (let i = points.length - 1; i > 0; i--) {
+                const p1 = points[i];
+                const p2 = points[i - 1];
+                const cpx = (p1.x + p2.x) / 2;
+                const cpy = (p1.bottomY + p2.bottomY) / 2;
+                ctx.quadraticCurveTo(p1.x, p1.bottomY, cpx, cpy);
+            }
+
+            ctx.lineTo(0, centerY);
+            ctx.closePath();
+
+            // Fill with gradient
+            gradient.addColorStop(0, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.2)`);
+            gradient.addColorStop(0.5, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.6)`);
+            gradient.addColorStop(1, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.2)`);
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Add outline
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.8;
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Radial/Circular Visualizer
+        function drawRadialVisualizer(processedData) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const minRadius = Math.min(canvas.width, canvas.height) * 0.15;
+            const maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
+
+            const baseColor = hexToRgb(barColor);
+
+            // Draw from center outward
+            for (let i = 0; i < NUM_BARS; i++) {
+                const angle = (i / NUM_BARS) * Math.PI * 2 - Math.PI / 2; // Start from top
+                const value = processedData[i];
+                const normalizedValue = value / 255;
+
+                // Calculate radius based on amplitude
+                const radius = minRadius + Math.pow(normalizedValue, 0.6) * (maxRadius - minRadius) * 1.2;
+
+                const x1 = centerX + Math.cos(angle) * minRadius;
+                const y1 = centerY + Math.sin(angle) * minRadius;
+                const x2 = centerX + Math.cos(angle) * radius;
+                const y2 = centerY + Math.sin(angle) * radius;
+
+                // Color based on position and intensity
+                const hueShift = (i / NUM_BARS) * 60;
+                const intensity = normalizedValue;
+
+                const r = Math.min(255, Math.max(0, baseColor.r + Math.sin(hueShift * Math.PI / 180) * 50 * intensity));
+                const g = Math.min(255, Math.max(0, baseColor.g + Math.cos(hueShift * Math.PI / 180) * 50 * intensity));
+                const b = Math.min(255, Math.max(0, baseColor.b - Math.sin(hueShift * Math.PI / 180) * 30 * intensity));
+
+                // Draw line from center
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = `rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${0.6 + intensity * 0.4})`;
+                ctx.lineWidth = (canvas.width / NUM_BARS) * 2;
+                ctx.stroke();
+            }
+
+            // Draw smooth outer ring
+            ctx.beginPath();
+            for (let i = 0; i <= NUM_BARS; i++) {
+                const angle = (i / NUM_BARS) * Math.PI * 2 - Math.PI / 2;
+                const value = processedData[i % NUM_BARS];
+                const normalizedValue = value / 255;
+                const radius = minRadius + Math.pow(normalizedValue, 0.6) * (maxRadius - minRadius) * 1.2;
+
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.strokeStyle = barColor;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = barColor;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Draw center circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, minRadius, 0, Math.PI * 2);
+            ctx.fillStyle = bgColor;
+            ctx.fill();
+            ctx.strokeStyle = barColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Spectral Waterfall Visualization
+        function drawWaterfall(processedData) {
+            // Add current frame to history
+            waterfallHistory.unshift([...processedData]);
+
+            // Limit history
+            if (waterfallHistory.length > WATERFALL_ROWS) {
+                waterfallHistory.pop();
+            }
+
+            const barWidth = canvas.width / NUM_BARS;
+            const rowHeight = canvas.height / WATERFALL_ROWS;
+            const baseColor = hexToRgb(barColor);
+
+            // Draw waterfall from top to bottom (newest to oldest)
+            for (let row = 0; row < waterfallHistory.length; row++) {
+                const rowData = waterfallHistory[row];
+                const y = row * rowHeight;
+                const age = row / waterfallHistory.length; // 0 = newest, 1 = oldest
+
+                for (let i = 0; i < NUM_BARS; i++) {
+                    const value = rowData[i];
+                    const normalizedValue = value / 255;
+                    const x = i * barWidth;
+
+                    // Color intensity based on frequency value and age
+                    const intensity = Math.pow(normalizedValue, 0.7) * (1 - age * 0.7); // Fade with age
+
+                    // Create color gradient based on intensity
+                    let r, g, b;
+                    if (intensity < 0.3) {
+                        // Low intensity - dark blue
+                        r = 0;
+                        g = 0;
+                        b = Math.floor(intensity * 255 * 3);
+                    } else if (intensity < 0.6) {
+                        // Medium intensity - use bar color
+                        const t = (intensity - 0.3) / 0.3;
+                        r = Math.floor(baseColor.r * t);
+                        g = Math.floor(baseColor.g * t);
+                        b = Math.floor((baseColor.b * t + 100 * (1 - t)));
+                    } else {
+                        // High intensity - bright
+                        const t = (intensity - 0.6) / 0.4;
+                        r = Math.floor(baseColor.r + (255 - baseColor.r) * t);
+                        g = Math.floor(baseColor.g + (255 - baseColor.g) * t);
+                        b = Math.floor(baseColor.b + (255 - baseColor.b) * t * 0.5);
+                    }
+
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    ctx.fillRect(x, y, barWidth + 1, rowHeight + 1); // +1 to avoid gaps
+                }
+            }
+
+            // Draw frequency scale at top
+            ctx.fillStyle = barColor;
+            ctx.font = '10px Courier New';
+            ctx.fillText('BASS', 10, 15);
+            ctx.fillText('MID', canvas.width / 2 - 15, 15);
+            ctx.fillText('TREBLE', canvas.width - 50, 15);
+
+            // Draw time indicator
+            ctx.fillText('NOW', canvas.width - 40, 30);
+            ctx.fillText('PAST', canvas.width - 40, canvas.height - 10);
         }
 
         // Helper function to convert hex to RGB
@@ -847,6 +1129,28 @@
 
         particleShapeSelect.addEventListener('change', (e) => {
             particleShape = e.target.value;
+        });
+
+        // Visualization mode control
+        visualizationModeSelect.addEventListener('change', (e) => {
+            visualizationMode = e.target.value;
+            // Clear waterfall history when switching modes
+            if (visualizationMode === 'waterfall') {
+                waterfallHistory = [];
+            }
+        });
+
+        // Collapse/Expand controls
+        let isCollapsed = false;
+        collapseBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                controlsPanel.classList.add('collapsed');
+                collapseBtn.textContent = '▲ SHOW CONTROLS';
+            } else {
+                controlsPanel.classList.remove('collapsed');
+                collapseBtn.textContent = '▼ HIDE CONTROLS';
+            }
         });
 
         // Initialize

@@ -15,11 +15,13 @@
         <div id="debugLog"></div>
     </div> -->
 
-    <div class="controls-panel">
-        <div class="now-playing" id="nowPlaying">
-            <div class="title">NO TRACK</div>
-            <div class="artist">SELECT A SONG</div>
-        </div>
+    <div class="controls-panel" id="controlsPanel">
+        <button class="collapse-btn" id="collapseBtn">▼ HIDE CONTROLS</button>
+        <div class="controls-content" id="controlsContent">
+            <div class="now-playing" id="nowPlaying">
+                <div class="title">NO TRACK</div>
+                <div class="artist">SELECT A SONG</div>
+            </div>
         <select id="playlist" class="playlist-select"></select>
         <div class="control-buttons">
             <button id="prevBtn">◄◄ PREV</button>
@@ -44,6 +46,15 @@
                 <input type="color" id="bgColor" value="#000000">
             </div>
         </div>
+        <div class="visualization-mode-control">
+            <label>VIZ MODE:</label>
+            <select id="visualizationMode">
+                <option value="classic">CLASSIC WAVE</option>
+                <option value="frequency-bands">FREQUENCY BANDS</option>
+                <option value="radial">RADIAL</option>
+                <option value="waterfall">WATERFALL</option>
+            </select>
+        </div>
         <div class="particle-controls">
             <div class="particle-count-control">
                 <label>PARTICLES:</label>
@@ -62,7 +73,8 @@
             </div>
             <a href="https://lostdog-band.com">Lost Dog Home</a>
         </div>
+        </div>
     </div>
-        <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
