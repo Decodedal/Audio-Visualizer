@@ -15,11 +15,13 @@
         <div id="debugLog"></div>
     </div> -->
 
-    <div class="controls-panel">
-        <div class="now-playing" id="nowPlaying">
-            <div class="title">NO TRACK</div>
-            <div class="artist">SELECT A SONG</div>
-        </div>
+    <div class="controls-panel" id="controlsPanel">
+        <button class="collapse-btn" id="collapseBtn">▼ HIDE CONTROLS</button>
+        <div class="controls-content" id="controlsContent">
+            <div class="now-playing" id="nowPlaying">
+                <div class="title">NO TRACK</div>
+                <div class="artist">SELECT A SONG</div>
+            </div>
         <select id="playlist" class="playlist-select"></select>
         <div class="control-buttons">
             <button id="prevBtn">◄◄ PREV</button>
@@ -71,7 +73,8 @@
             </div>
             <a href="https://lostdog-band.com">Lost Dog Home</a>
         </div>
+        </div>
     </div>
-        <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

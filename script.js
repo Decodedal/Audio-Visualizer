@@ -67,6 +67,8 @@
         const particleCountValue = document.getElementById('particleCountValue');
         const particleShapeSelect = document.getElementById('particleShape');
         const visualizationModeSelect = document.getElementById('visualizationMode');
+        const controlsPanel = document.getElementById('controlsPanel');
+        const collapseBtn = document.getElementById('collapseBtn');
 
         // Initialize canvas
         function resizeCanvas() {
@@ -1135,6 +1137,19 @@
             // Clear waterfall history when switching modes
             if (visualizationMode === 'waterfall') {
                 waterfallHistory = [];
+            }
+        });
+
+        // Collapse/Expand controls
+        let isCollapsed = false;
+        collapseBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                controlsPanel.classList.add('collapsed');
+                collapseBtn.textContent = '▲ SHOW CONTROLS';
+            } else {
+                controlsPanel.classList.remove('collapsed');
+                collapseBtn.textContent = '▼ HIDE CONTROLS';
             }
         });
 
